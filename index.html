@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+    <title>Chat IO</title>
+    <style>
+        body {
+            margin-top: 30px;
+        }
+        #messageArea {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="userFormArea" class="row">
+            <div class="col-md-12">
+                <form id="userForm">
+                    <div class="form-group">
+                        <label>Enter Username</label>
+                        <input class="form-control" id="username"></input>
+                        <br>
+                        <input type="submit" value="Login" class="btn btn-primary">
+                    </div>
+                </form> 
+            </div>
+        </div>
+        <div id="messageArea" class="row">
+            <div class-"col-md-4">
+                <div class="well">
+                    <h3>Online Users</h3>
+                    <ul class="list-group" id="users"></ul>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="chat" id="chat"></div>
+
+                <form id="messageForm">
+                    <div class="form-group">
+                        <label>Enter Message</label>
+                        <textarea class="form-control" id="message"></textarea>
+                        <br>
+                        <input type="submit" value="Send Message" class="btn btn-primary">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(function() {
+            let socket = io.connect();
+            let $messageForm = $('#messageForm');
+            let $message = $('#message');
+            let $chat = $('#chat');
+            let $messageArea = $('#messageArea')
+            let $userFormArea = $('#userFormArea')
+            let $userForm = $('#userForm')
+            let $users = $('#users');
+            let $username = $('#username')
+
+
+            $messageForm.submit(function(e){
+                e.preventDefault();
+                socket.emit('send message', $message.val());
+                $message.val('');
+            })
+
+            socket.on('new message', function(data) {
+                $chat.append('<div class="well"><strong>'+data.user+'</strong>: '+data.msg+'</div>');
+            })
+
+            $userForm.submit(function(e){
+                e.preventDefault();
+                socket.emit('new user', $username.val(), function(data) {
+                    if (data) {
+                        $userFormArea.hide();
+                        $messageArea.show();
+                    }
+                });
+                $username.val('');
+            })
+
+            socket.on('get users', function(data) {
+                var html = '';
+                for (i=0; i<data.length; i++) {
+                    html += '<li class="list-group-item">'+data[i]+'</li>';
+                }
+                $users.html(html);
+            })
+        })
+    </script>
+</body>
+</html>
